@@ -1,0 +1,152 @@
+---
+title: "Mid_an_milestone"
+author: "Gabriela Caballero"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+milestones<-read.csv("~/Documents/NYU Fall 2020/BA/05_tb_mid_ana_milestone.csv", header=T, na.strings=c("","NA"))
+
+```
+
+Created Applications by Month
+```{r, include=FALSE}
+#library(ggplot2)
+#milestones$milestone_created_date<-sub("33:47.0","NA",milestones$milestone_created_date)
+#milestones$milestone_created_date<- as.Date(milestones$milestone_created_date,"%m/%d/%y")
+#milestones$createdMonth<-months(milestones$milestone_created_date)
+#applCreatedByMonth<-aggregate(milestones$element_id,by=list(milestones$createdMonth),FUN="length")
+#applCreatedByMonth$Group.1 <- factor(applCreatedByMonth$Group.1,levels = c("January", "February", "March", "April","May", "June","July","August","September","October","November","December"))
+#ggplot(applCreatedByMonth,aes(x=Group.1,y=x)) +
+#geom_bar(stat="identity",width=0.5) +
+#ggtitle("Applications Created by Month") + ylim(0,15500)
+```
+Applications started by month
+```{r}
+library(ggplot2)
+
+milestones$milestone_application_start_date<-as.Date(milestones$milestone_application_start_date,"%m/%d/%y")
+#Extracting months from the start application date
+milestones$createdMonth<-months( milestones$milestone_application_start_date)
+#Counting applications started by month
+
+applCreatedByMonth<-aggregate(na.omit(milestones$element_id),by=list(milestones$createdMonth),FUN="length")
+applCreatedByMonth
+#Ordering 
+applCreatedByMonth$Group.1 <- factor(applCreatedByMonth$Group.1,levels = c("January", "February", "March", "April","May", "June","July","August","September","October","November","December"))
+#Ploting
+ggplot(applCreatedByMonth,aes(x=Group.1,y=x)) +
+geom_bar(stat="identity",width=0.5) +
+ggtitle("Applications Started by Month") + ylim(0,max(applCreatedByMonth$x))
+```
+
+
+
+
+
+#AVG time to complete an application in months
+```{r cars}
+#Converting into date format
+milestones$milestone_application_complete_date<-as.Date(milestones$milestone_application_complete_date,"%m/%d/%y")
+milestones$milestone_application_start_date<-as.Date(milestones$milestone_application_start_date,"%m/%d/%y")
+milestones$daysToCompleteApl<-as.numeric( milestones$milestone_application_complete_date - milestones$milestone_application_start_date)
+#Average days to complete an application
+summary(milestones$daysToCompleteApl)
+boxplot(milestones$daysToCompleteApl)
+
+```
+
+##Percentage of applications started that end up being submited 
+
+```{r}
+
+appStarted=subset(milestones,!is.na(milestones$milestone_application_start_date))
+appSubmited=subset(milestones,!is.na(milestones$milestone_application_submit_date))
+appDiscarded=length(appStarted$element_id)-length(appSubmited$element_id)
+#PercApSubmited=(length(appSubmited$element_id)*100)/length(appStarted$element_id)
+#PercApDiscarded=appStarted- PercApSubmited
+slices <- c(length(appSubmited$element_id), appDiscarded)
+lbls<-c("Applications submited","Applications discarded")
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pieChart=pie(slices,labels = lbls, col=rainbow(length(lbls)),
+   main="Pie Chart of Applications submitted")
+
+```
+
+#Applications submitted that are admited
+```{r}
+appsAdmited=subset(milestones,!is.na(milestones$milestone_admit_date))
+appsDenied=subset(milestones,!is.na(milestones$milestone_denied_date))
+PercApAdmited=length(appsAdmited$element_id)
+PercApDenied=length(appsDenied$element_id)
+PercpApsUnk=length(appStarted$element_id)-(PercApAdmited+PercApDenied)
+slices2 <- c(PercApAdmited, PercApDenied,PercpApsUnk)
+lbls2<-c("Applications Admited","Applications Denied","Applications without information")
+pct2 <- round(slices2/sum(slices2)*100)
+lbls2 <- paste(lbls2, pct2) # add percents to labels
+lbls2 <- paste(lbls2,"%",sep="") # ad % to labels
+pieChart2=pie(slices2,labels = lbls2, col=rainbow(length(lbls2)),
+   main="Pie Chart of Admited and Denied Applications")
+```
+#Applications admitted per month
+```{r}
+library(ggplot2)
+
+milestones$milestone_admit_date<-as.Date(milestones$milestone_admit_date,"%m/%d/%y")
+#Extracting months from the admitions application date
+milestones$admitedMonth<-months( milestones$milestone_admit_date)
+#Counting applications admited by month
+
+applAdmitedByMonth<-aggregate(na.omit(milestones$element_id),by=list(milestones$admitedMonth),FUN="length")
+applAdmitedByMonth
+#Ordering 
+applAdmitedByMonth$Group.1 <- factor(applAdmitedByMonth$Group.1,levels = c("January", "February", "March", "April","May", "June","July","August","September","October","November","December"))
+#Ploting
+ggplot(applAdmitedByMonth,aes(x=Group.1,y=x)) +
+geom_bar(stat="identity",width=0.5) +
+ggtitle("Applications Admited by Month") + ylim(0,max(applAdmitedByMonth$x))
+```
+#Applicants admited that end up enrolling and withdrawing
+```{r}
+#Converting into date format
+appsEnrolled=subset(milestones,!is.na(milestones$milestone_enroll_date))
+PercApEnrolled=length(appsEnrolled$element_id)
+appsWithdraw=subset(milestones,!is.na(milestones$milestone_withdraw_date))
+PercApWithdrawed=length(appsWithdraw$element_id)
+PerceApAdmitUnkonw=length(appsAdmited$element_id)-(PercApEnrolled+PercApWithdrawed)
+PercApEnrolled
+PercApWithdrawed
+PerceApAdmitUnkonw
+slices3 <- c(PercApEnrolled, PercApWithdrawed, PerceApAdmitUnkonw)
+lbls3<-c("Applicants Enrolled","Applications Withdrawed", "Applications without info")
+pct3 <- round(slices3/sum(slices3)*100)
+lbls3 <- paste(lbls3, pct3) # add percents to labels
+lbls3 <- paste(lbls3,"%",sep="") # ad % to labels
+pieChart3=pie(slices3,labels = lbls3, col=rainbow(length(lbls3)),
+   main="Pie Chart of Enrolled and Wirdrawed Applications")
+```
+
+#Enrollings per Month
+```{r}
+library(ggplot2)
+
+milestones$milestone_enroll_date<-as.Date(milestones$milestone_enroll_date,"%m/%d/%y")
+#Extracting months from the enrolled application date
+milestones$enrollMonth<-months( milestones$milestone_enroll_date)
+#Counting applications enrolled by month
+
+applEnrolledByMonth<-aggregate(na.omit(milestones$element_id),by=list(milestones$enrollMonth),FUN="length")
+applEnrolledByMonth
+#Ordering 
+applEnrolledByMonth$Group.1 <- factor(applEnrolledByMonth$Group.1,levels = c("January", "February", "March", "April","May", "June","July","August","September","October","November","December"))
+#Plotting
+ggplot(applEnrolledByMonth,aes(x=Group.1,y=x)) +
+geom_bar(stat="identity",width=0.5) +
+ggtitle("Applications Enrolled by Month") + ylim(0,max(applEnrolledByMonth$x))
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

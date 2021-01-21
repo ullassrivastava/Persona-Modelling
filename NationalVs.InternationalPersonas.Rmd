@@ -1,0 +1,114 @@
+---
+title: "PersonasFindings"
+author: "Gabriela Caballero"
+date: "10/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("dplyr")
+library(ggplot2)
+#Load all data
+river_users<-read.csv("~/Documents/NYU Fall 2020/BA/BA Project 1/00_tb_mid_rivier_users.csv", header=T, na.strings=c("","NA"))
+mid_ana_basic<-read.csv("~/Documents/NYU Fall 2020/BA/BA Project 1/01_tb_mid_ana_basic.csv", header=T, na.strings=c("","NA"))
+mid_ana_school<-read.csv("~/Documents/NYU Fall 2020/BA/BA Project 1/03_tb_mid_ana_school.csv", header=T, na.strings=c("","NA"))
+mid_ana_stu<-read.csv("~/Documents/NYU Fall 2020/BA/BA Project 1/02_tb_mid_ana_stu_info.csv", header=T, na.strings=c("","NA"))
+mid_ana_address<-read.csv("~/Documents/NYU Fall 2020/BA/BA Project 1/04_tb_mid_ana_address.csv", header=T, na.strings=c("","NA"))
+mid_ana_milestone<-read.csv("~/Documents/NYU Fall 2020/BA/BA Project 1/04_tb_mid_ana_address.csv", header=T, na.strings=c("","NA"))
+
+#Merge data sets
+mergedData5 = merge(river_users, mid_ana_basic)
+mergedData4 = merge(mergedData5, mid_ana_school)
+mergedData3= merge(mergedData4, mid_ana_stu)
+mergedData2 = merge(mergedData3,mid_ana_address)
+mergedData = merge(mergedData2, mid_ana_milestone)
+
+
+
+```
+```{r}
+```
+
+
+```{r}
+#Keep only enrolled students
+enrolledStudents <- subset(mergedData, !is.na(mergedData$milestone_enroll_date))
+length(enrolledStudents$element_id)
+#arrange(aggregate(enrolledStudents$element_id, by=list(enrolledStudents$address_home_country),FUN = "length"),desc(x))
+#Subset national vs. international students
+enrolledNationalStudents<-subset(enrolledStudents,enrolledStudents$address_home_country=="USA")
+length(enrolledNationalStudents$element_id)
+enrolledInternationalStudents<-subset(enrolledStudents,enrolledStudents$address_home_country!="USA")
+length(enrolledInternationalStudents$element_id)
+#Plot pie chart
+slices <- c(length(enrolledNationalStudents$element_id), length(enrolledInternationalStudents$element_id))
+lbls<-c("National Students","International Students")
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pieChart=pie(slices,labels = lbls, col=rainbow(length(lbls)),
+   main="Pie Chart of National vs. International Students")
+
+
+
+
+```
+
+
+
+```{r }
+#Analyze National students home states
+enrolledNationalStudentsPerState<-arrange(aggregate(enrolledNationalStudents$element_id, by=list(enrolledNationalStudents$address_home_state),FUN = "length"),desc(x))
+ggplot(enrolledNationalStudentsPerState,aes(x=Group.1,y=x)) +
+geom_bar(stat="identity",width=0.5) +
+ggtitle("Enrolled National Students by State") + ylim(0,max(enrolledNationalStudentsPerState$x))
+
+```
+
+
+
+```{r }
+#Analyze most popular major among national students
+enrolledNationalStudentsbyMajor<- arrange(aggregate(enrolledNationalStudents$element_id, by=list(enrolledNationalStudents$intended_major_name), FUN="length"), desc(x))
+enrolledNationalStudentsbyMajor<-top_n(enrolledNationalStudentsbyMajor,5,enrolledNationalStudentsbyMajor$x)
+ggplot(enrolledNationalStudentsbyMajor,aes(x=Group.1,y=x)) +
+geom_bar(stat="identity",width=0.5) +
+ggtitle("Enrolled National Students by Major") + ylim(0,max(enrolledNationalStudentsbyMajor$x))
+#Nursuing is the most popular major among National students
+enrolledNationalStudentsNursing<-subset(enrolledNationalStudents, enrolledNationalStudents$intended_major_name=="Nursing")
+
+```
+
+```{r}
+#Analyzing income
+summary( enrolledNationalStudentsNursing$household_income_median)
+sd(enrolledNationalStudentsNursing$household_income_median, na.rm = TRUE)
+boxplot(enrolledNationalStudentsNursing$household_income_median)
+#We can observe lots of variability. Let’s isolate the incomes that occur 1 standard deviation from the mean and computer summary statistics 
+cutoff=mean(enrolledNationalStudentsNursing$household_income_median,na.rm = TRUE)+sd(enrolledNationalStudentsNursing$household_income_median,na.rm = TRUE)
+cutoff
+enrolNatStuIncome.sd1=subset(enrolledNationalStudentsNursing,enrolledNationalStudentsNursing$household_income_median >=cutoff)
+summary(enrolNatStuIncome.sd1$household_income_median)
+boxplot(enrolNatStuIncome.sd1$household_income_median)
+#Average household income median of $145,973
+
+
+```
+
+```{r}
+
+#Analyzing Age 
+arrange(aggregate(enrolledNationalStudentsNursing$element_id, by = list(enrolledNationalStudentsNursing$academic_load), FUN = "length"), desc(x))
+enrolledNationalStudentsNursing$date_of_birth<-as.Date(enrolledNationalStudentsNursing$date_of_birth,"%m/%d/%y")
+#Analyzing ages
+enrolledNationalStudentsNursing$YearOfBirth <- sub('-.*$', '', enrolledNationalStudentsNursing$date_of_birth)
+enrolledNationalStudentsNursing$Age<-2020- as.numeric(enrolledNationalStudentsNursing$YearOfBirth)
+summary(enrolledNationalStudentsNursing$Age, na.rm = TRUE)
+sd(enrolledNationalStudentsNursing$Age, na.rm = TRUE)
+boxplot(enrolledNationalStudentsNursing$Age,col="pink", horizontal = TRUE, notch = TRUE)
+#AVG AGE 20
+
+#Persona 1: National Student from New Hampshire- Major: Nursing, Income: $145,973, Age: 20
+```
+

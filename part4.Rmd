@@ -1,0 +1,89 @@
+---
+title: "Midterm- P4"
+author: "Ullas Srivastava"
+date: "10/11/2020"
+output: html_document
+---
+## Loading Locational Data
+```{r}
+
+library(readxl)
+data <- readxl:: read_xlsx("part4-dataset.xlsx")
+colnames(data)
+#View(data)
+```
+## Removing Outliers
+```{r}
+
+#(data$address_home_state)
+
+```
+
+Since the data is non continouous, non numeric, there are no outliers in this section of the data. 
+
+## 2. Mapping the data for all the applicant's Countries
+```{r}
+
+library(OpenStreetMap)
+
+usmap=openmap(
+c(round(max(data$address_home_lat,na.rm=T),2),round(min(data$address_home_lng,na.rm=T),2)),
+c(round(min(data$address_home_lat,na.rm=T),2),round(max(data$address_home_lng,na.rm=T),2)),
+type="osm")
+
+```
+
+```{r}
+library(ggplot2)
+
+autoplot.OpenStreetMap(openproj(usmap))+geom_point(data = data,mapping = aes(x=address_home_lng,y=address_home_lat))
+```
+
+## Histogram of the most popular cities
+
+``` {R}
+#addr-city
+library(dplyr)
+temp<-select(data,col="address_home_city")
+temp<- subset(temp,!is.na(temp) & temp != "" &temp!=0)
+temp<-aggregate(x=temp,by = list(temp$col),FUN=length)
+
+#filtering by the number of col
+temp<- subset(temp,temp$col>1500)
+
+ggplot(temp)+geom_bar(aes(x=reorder(Group.1,-col),y=col),stat="identity")+ theme(axis.text.x = element_text(angle = 90))+
+ggtitle("Most Popular City")
+
+
+
+```
+
+## Histogram of the most popular States
+
+``` {R}
+#addr-state
+library(ggplot2)
+temp<-select(data,col="address_home_state")
+temp<- subset(temp,!is.na(temp) & temp != "" &temp!=0)
+temp<-aggregate(x=temp,by = list(temp$col),FUN=length)
+
+temp<- subset(temp,temp$col>100)
+ggplot(temp)+geom_bar(aes(x=reorder(Group.1,-col),y=col),stat="identity")+ theme(axis.text.x = element_text(angle = 90))+
+ggtitle("Most Popular State")
+```
+
+## Histogram of the most popular Counties
+
+``` {R}
+#addr-county
+library(ggplot2)
+temp<-select(data,col="address_home_county")
+temp<- subset(temp,!is.na(temp) & temp != "" &temp!=0)
+temp<-aggregate(x=temp,by = list(temp$col),FUN=length)
+
+#clean
+temp<- subset(temp,temp$col>10000)
+ggplot(temp)+geom_bar(aes(x=reorder(Group.1,-col),y=col),stat="identity")+ theme(axis.text.x = element_text(angle = 90)) +
+ggtitle("Most Popular County")
+```
+

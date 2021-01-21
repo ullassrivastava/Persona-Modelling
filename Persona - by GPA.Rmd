@@ -1,0 +1,194 @@
+---
+title: "persona"
+author: "Yangxin Liu"
+date: "10/13/2020"
+output: html_document
+---
+
+# Import File
+
+```{r}
+
+file_mid <- "/Users/yangxinliu/Desktop/06_tb_mid_ana_river.csv"
+river <- read.csv(file_mid, header = TRUE, stringsAsFactors = FALSE)
+head(river)
+
+```
+
+# Persona
+
+
+# Students with A in Highschool
+```{r}
+library(ggplot2)
+
+river$hs_gpa <- as.double(river$hs_gpa)
+summary(river$hs_gpa)
+
+highschool_gpa<- subset(river, river$hs_gpa<4 & river$hs_gpa >3.7 )
+summary(highschool_gpa)
+
+hs_3.7 <- aggregate(na.omit(highschool_gpa$element_id), by = list(highschool_gpa$hs_gpa), FUN = "length")
+
+hs_3.7$GPA = formatC(hs_3.7$Group.1, digits = 1, format = "f")
+
+aggregate(hs_3.7$x ~ hs_3.7$GPA, data = hs_3.7, sum)
+
+ggplot(hs_3.7,aes(x = GPA, y=x) ) +
+geom_bar(stat="identity",width=0.5) +  ggtitle("Students with A") + ylim(0,max(hs_3.7$x))
+
+
+```
+
+
+
+# Students with A by Major
+
+```{r}
+
+hs_3.7_major <- aggregate(na.omit(highschool_gpa$element_id), by = list(highschool_gpa$intended_major), FUN = "length")
+
+hs_3.7_major_10 <- subset(hs_3.7_major, hs_3.7_major$ x > 20 )
+
+ggplot(hs_3.7_major_10,aes(reorder(x = Group.1, -x), y=x) ) + theme(axis.text.x = element_text(angle = 90)) +
+geom_bar(stat="identity",width=0.5) +  ggtitle("10 Most Popular Major of Students with A") + ylim(0,max(hs_3.7_major_10$x))
+
+
+```
+
+
+
+# Students with A by State
+
+```{r}
+
+hs_3.7_state <- aggregate(na.omit(highschool_gpa$element_id), by = list(highschool_gpa$address_home_state), FUN = "length")
+
+hs_3.7_state_10 <- subset(hs_3.7_state, hs_3.7_state$ x > 25 )
+
+ggplot(hs_3.7_state_10,aes(reorder(x = Group.1, -x), y=x) ) + geom_bar(stat="identity",width=0.5) +  ggtitle("5 States with the Most students with A") + ylim(0,max(hs_3.7_state_10$x))
+
+
+```
+
+
+
+
+# Students with A by age
+
+
+```{r}
+
+highschool_gpa$date_of_birth<-as.Date(highschool_gpa$date_of_birth,"%m/%d/%y")
+
+hs_3.7_birth <- aggregate(na.omit(highschool_gpa$element_id), by = list(highschool_gpa$date_of_birth), FUN = "length")
+
+library(lubridate)
+date <- c(hs_3.7_birth$Group.1)
+hs_3.7_birth$year <- year(date)
+
+aggregate(hs_3.7_birth$x ~ hs_3.7_birth$year, data = hs_3.7_birth, sum)
+
+hs_3.7_birth$Age <- 2020 - as.numeric(hs_3.7_birth$year)
+hs_3.7_birth_Real<- subset(hs_3.7_birth, hs_3.7_birth$Age > 0)
+summary(hs_3.7_birth_Real, na.rm = TRUE)
+
+sd(hs_3.7_birth_Real$Age, na.rm = TRUE)
+
+boxplot(hs_3.7_birth_Real$Age,col="grey", horizontal = FALSE, notch = TRUE)
+
+
+## Most students with an A grade are 20 - 23 years old,
+
+```
+
+
+# Students with A by college Graduation
+
+```{r}
+
+hs_3.7_grads <- aggregate(na.omit(highschool_gpa$element_id), by = list(highschool_gpa$college_graduated), FUN = "length")
+hs_3.7_grads <- hs_3.7_grads[-1,]
+
+grads <- c(hs_3.7_grads$x)
+grads
+graduation<-c("Failed","Graduated")
+portion <- round(grads/sum(grads)*100)
+
+graduation <- paste(graduation, portion) 
+graduation <- paste(graduation,"%",sep="") 
+pieChart=pie(grads,labels = graduation,
+   main="Gradution of students with A")
+
+
+
+
+
+```
+
+# by Milestone Admit Date
+
+```{r}
+
+highschool_gpa$milestone_admit_date<-as.Date(highschool_gpa$milestone_admit_date,"%m/%d/%y")
+
+hs_3.7_admit <- aggregate(na.omit(highschool_gpa$element_id), by = list(highschool_gpa$milestone_admit_date), FUN = "length")
+
+library(lubridate)
+date_admit <- c(hs_3.7_admit$Group.1)
+hs_3.7_admit$year <- year(date_admit)
+
+aggregate(hs_3.7_admit$x ~ hs_3.7_admit$year, data = hs_3.7_admit, sum)
+
+summary(hs_3.7_admit, na.rm = TRUE)
+
+boxplot(hs_3.7_admit$year,col="grey", horizontal = FALSE, notch = TRUE)
+
+```
+
+
+
+
+# by Milestone Enroll Date
+
+```{r}
+highschool_gpa$milestone_enroll_date<-as.Date(highschool_gpa$milestone_enroll_date,"%m/%d/%y")
+
+hs_3.7_enroll <- aggregate(na.omit(highschool_gpa$element_id), by = list(highschool_gpa$milestone_enroll_date), FUN = "length")
+
+library(lubridate)
+date_enroll <- c(hs_3.7_enroll$Group.1)
+hs_3.7_enroll$year <- year(date_enroll)
+
+aggregate(hs_3.7_enroll$x ~ hs_3.7_enroll$year, data = hs_3.7_enroll, sum)
+
+summary(hs_3.7_enroll, na.rm = TRUE)
+
+boxplot(hs_3.7_enroll$year,col="grey", horizontal = FALSE, notch = TRUE)
+```
+
+
+# by College GPA
+
+```{r}
+
+library(ggplot2)
+
+highschool_gpa$college_gpa <- as.double(highschool_gpa$college_gpa)
+summary(highschool_gpa$college_gpa)
+
+college_gpa<- subset(highschool_gpa, highschool_gpa$college_gpa >0 )
+summary(college_gpa)
+
+hs_3.7_college <- aggregate(na.omit(college_gpa$element_id), by = list(college_gpa$college_gpa), FUN = "length")
+
+hs_3.7_college$GPA = formatC(hs_3.7_college$Group.1, digits = 1, format = "f")
+
+aggregate(hs_3.7_college$x ~ hs_3.7_college$GPA, data = hs_3.7_college, sum)
+
+ggplot(hs_3.7_college,aes(x = GPA, y=x) ) +
+geom_bar(stat="identity",width=0.5) +  ggtitle("College GPA for High Shcool Students with A") + ylim(0,max(hs_3.7_college$x))
+
+
+```
+
